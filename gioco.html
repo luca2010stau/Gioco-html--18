@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gioco Viaggio +18</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #111; color: #fff; }
+    #map { height: 40vh; width: 100vw; }
+    #game-ui { padding: 10px; }
+    #dialogue-box, #character-select, #party-box, #custom-genitals {
+      background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 6px; margin-bottom: 10px;
+    }
+    button, select, input[type=range] {
+      width: 100%; margin-top: 5px; padding: 10px; background: #444; color: white; border: none; border-radius: 5px;
+    }
+    button:hover { background: #666; }
+    label { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="game-ui">
+  <div id="custom-genitals">
+    <h3>Personalizzazione Corpo</h3>
+    <label>Genere:
+      <select id="genderSelect">
+        <option value="male">Maschio</option>
+        <option value="female">Femmina</option>
+        <option value="custom">Altro</option>
+      </select>
+    </label>
+    <label>Dimensione Genitali:</label>
+    <input type="range" id="genitalSize" min="1" max="10" value="5">
+    <span id="genitalSizeLabel">5</span>
+    <button onclick="saveCharacter()">Salva Caratteristiche</button>
+  </div>
+
+  <div id="dialogue-box">
+    <div id="npc-name"><strong>NPC:</strong> Mama Murphy</div>
+    <div id="npc-dialogue">Benvenuto nel viaggio. Vuoi unirti a me?</div>
+    <button onclick="nextDialogue()">Parla</button>
+    <button onclick="recruitCharacter('Mama Murphy')">Recluta</button>
+  </div>
+
+  <div id="party-box">
+    <h3>Compagni di Viaggio</h3>
+    <ul id="partyList"></ul>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Inizializza mappa
+  var map = L.map('map').setView([34.0522, -118.2437], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  L.marker([34.0522, -118.2437]).addTo(map).bindPopup("Punto di partenza");
+
+  // Genital size display
+  const sizeInput = document.getElementById("genitalSize");
+  const sizeLabel = document.getElementById("genitalSizeLabel");
+  sizeInput.addEventListener("input", () => sizeLabel.textContent = sizeInput.value);
+
+  // Salva caratteristiche in localStorage
+  function saveCharacter() {
+    const gender = document.getElementById("genderSelect").value;
+    const size = sizeInput.value;
+    localStorage.setItem("gender", gender);
+    localStorage.setItem("genitalSize", size);
+    alert("Caratteristiche salvate!");
+  }
+
+  // Dialoghi + sintesi vocale
+  const dialogues = [
+    "Benvenuto nel viaggio. Vuoi unirti a me?",
+    "Attento. La strada è lunga e piena di tentazioni.",
+    "Ti guiderò, ma dovrai fare delle scelte..."
+  ];
+  let dialogueIndex = 0;
+
+  function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "it-IT";
+    speechSynthesis.speak(utterance);
+  }
+
+  function nextDialogue() {
+    if (dialogueIndex < dialogues.length) {
+      const text = dialogues[dialogueIndex];
+      document.getElementById("npc-dialogue").innerText = text;
+      speak(text);
+      dialogueIndex++;
+    } else {
+      document.getElementById("npc-dialogue").innerText = "Fine conversazione.";
+    }
+  }
+
+  // Sistema di reclutamento
+  let party = JSON.parse(localStorage.getItem("party")) || [];
+
+  function recruitCharacter(name) {
+    if (!party.includes(name)) {
+      party.push(name);
+      updatePartyUI();
+      localStorage.setItem("party", JSON.stringify(party));
+      alert(name + " si è unita al tuo gruppo!");
+    } else {
+      alert(name + " è già nel tuo gruppo.");
+    }
+  }
+
+  function updatePartyUI() {
+    const list = document.getElementById("partyList");
+    list.innerHTML = "";
+    party.forEach(member => {
+      const li = document.createElement("li");
+      li.textContent = member;
+      list.appendChild(li);
+    });
+  }
+
+  updatePartyUI(); // carica i dati salvati
+</script>
+</body>
+</html>
